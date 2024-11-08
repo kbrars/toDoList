@@ -5,32 +5,58 @@ namespace App\Http\Controllers;
 use App\Models\TaskList;
 use Illuminate\Http\Request;
 
-
-
 class TaskListController extends Controller
 {
-    public function getTasks()
+
+    public function index()
     {
         $tasks = TaskList::orderBy('updated_at', 'DESC')->get();
         return response()->json([
             'tasks' => $tasks
-        ],200);
+        ], 200);
     }
 
-    public function updateTask(Request $request)
+    public function store(Request $request)
     {
-        $task_id = $request ->get('id');
-        $task['title'] = $request ->get('title');
-        $task['context'] = $request ->get('context');
-        $task['date'] = $request ->get('date');
-        $task['due_date'] = $request ->get('due_date');
+        $task = [
+            'title' => $request->get('title'),
+            'context' => $request->get('context'),
+            'date' => $request->get('date'),
+            'due_date' => $request->get('due_date')
+        ];
+
+        $add = TaskList::create($task);
+
+        if ($add) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Task created successfully!'
+            ], 201);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to create task!'
+        ], 400);
+    }
 
 
-        $updated =TaskList::where('id', $task_id)
-            ->update(['title' =>  $task['title'],
-                'context'=> $task['context'],
-                'date' => $task['date'],
-                'due_date' => $task['due_date']]);
+    public function show(TaskList $task)
+    {
+        return response()->json([
+            'task' => $task
+        ], 200);
+    }
+
+
+    public function update(Request $request, TaskList $task)
+    {
+        $updated = $task->update([
+            'title' => $request->get('title'),
+            'context' => $request->get('context'),
+            'date' => $request->get('date'),
+            'due_date' => $request->get('due_date')
+        ]);
 
         if ($updated) {
             return response()->json([
@@ -43,38 +69,17 @@ class TaskListController extends Controller
             'status' => 'error',
             'message' => 'Failed to update task!'
         ], 400);
-
     }
 
 
-    public function addTask(Request $request)
+    public function destroy(TaskList $task)
     {
-
-
-        $task['title'] = $request ->get('title');
-        $task['context'] = $request ->get('context');
-        $task['date'] = $request ->get('date');
-        $task['due_date'] = $request ->get('due_date');
-
-        $add = TaskList::create($task);
-
-        if ($add) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Task updated successfully!'
-            ], 200);
-        }
+        $task->delete();
 
         return response()->json([
-            'status' => 'error',
-            'message' => 'Failed to update task!'
-        ], 400);
-    }
-
-    public function deleteTask(Request $request){
-        $task_id = $request ->get('id');
-        $task = TaskList::find($task_id);
-        $task->delete();
-        return $task_id;
+            'status' => 'success',
+            'message' => 'Task deleted successfully!',
+            'id' => $task->id
+        ], 200);
     }
 }
